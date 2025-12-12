@@ -262,6 +262,81 @@
             display: inline-block;
         }
 
+        .banana-adjuster {
+            background: linear-gradient(135deg, #FFF8E1, #FFE082);
+            border: 2px solid var(--accent-color);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .banana-counter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .counter-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .counter-btn:hover {
+            background-color: #3E2723;
+            transform: scale(1.1);
+        }
+
+        .counter-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .counter-display {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            min-width: 60px;
+        }
+
+        .adjust-btn {
+            background-color: var(--ai-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .adjust-btn:hover {
+            background-color: #1565C0;
+        }
+
+        .adjust-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -277,7 +352,7 @@
             body { background: white; padding: 0; }
             .container { box-shadow: none; padding: 0; margin: 0; width: 100%; max-width: 100%; }
             .hero-image { height: 200px; }
-            .btn-reset, .ai-btn, .camera-btn, input, .variation-generator { display: none !important; }
+            .btn-reset, .ai-btn, .camera-btn, input, .variation-generator, .banana-adjuster { display: none !important; }
             .ripeness-checker { border: 1px solid #ccc; background: none; }
             .list-item { border-bottom: 1px solid #eee; }
             .checkbox { border-color: #000; color: #000; }
@@ -291,7 +366,6 @@
 <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    // --- Persistence (24 Hour Expiry) ---
     const KEY_INGS = 'banana_bread_ings_v3';
     const KEY_STEPS = 'banana_bread_steps_v3';
     const ONE_DAY = 24 * 60 * 60 * 1000;
@@ -311,13 +385,12 @@
         } catch { return {}; }
     };
 
-    // --- Gemini API Helper (Server-Side) ---
-    async function callGemini(prompt, imageBase64 = null) {
+    async function callGemini(prompt, imageBase64 = null, useJsonMode = false) {
         try {
             const response = await fetch('/api/gemini', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, imageBase64 })
+                body: JSON.stringify({ prompt, imageBase64, useJsonMode })
             });
             
             const data = await response.json();
@@ -333,8 +406,7 @@
         }
     }
 
-    // --- Data ---
-    const INGREDIENTS = [
+    const ORIGINAL_INGREDIENTS = [
         { name: 'Eggs (Large, Room Temp)', amount: '2', unit: '', sub: 'Flax eggs' },
         { name: 'Buttermilk', amount: '1/3', unit: 'cup', sub: 'Milk + 1tsp vinegar' },
         { name: 'Vegetable Oil', amount: '1/2', unit: 'cup', sub: 'Melted butter or applesauce' },
@@ -360,19 +432,21 @@
         const [checkedIngs, setCheckedIngs] = useState(() => load(KEY_INGS));
         const [checkedSteps, setCheckedSteps] = useState(() => load(KEY_STEPS));
 
-        // AI State
-        const [stepTips, setStepTips] = useState({}); // Stores fetched tips
-        const [loadingTips, setLoadingTips] = useState({}); // Stores loading state
+        const [stepTips, setStepTips] = useState({});
+        const [loadingTips, setLoadingTips] = useState({});
 
-        // Camera State
         const [imgPreview, setImgPreview] = useState(null);
         const [analysis, setAnalysis] = useState(null);
         const [analyzing, setAnalyzing] = useState(false);
         const fileInput = useRef(null);
 
-        // Variation Generator State
         const [variation, setVariation] = useState(null);
         const [generatingVar, setGeneratingVar] = useState(false);
+
+        const [bananaCount, setBananaCount] = useState(3);
+        const [adjustedIngredients, setAdjustedIngredients] = useState(null);
+        const [adjusting, setAdjusting] = useState(false);
+        const [ingredients, setIngredients] = useState(ORIGINAL_INGREDIENTS);
 
         useEffect(() => save(KEY_INGS, checkedIngs), [checkedIngs]);
         useEffect(() => save(KEY_STEPS, checkedSteps), [checkedSteps]);
@@ -385,10 +459,51 @@
             setCheckedSteps(prev => ({ ...prev, [idx]: !prev[idx] }));
         };
 
-        // --- Feature 1: Ask Gemini about a step ---
+        const adjustRecipe = async () => {
+            setAdjusting(true);
+            
+            const prompt = `You are a precise recipe calculator. Given the original banana bread recipe that uses 2-3 bananas (1 cup mashed), adjust ALL ingredients proportionally for ${bananaCount} bananas.
+
+Original recipe (for 2-3 bananas):
+${ORIGINAL_INGREDIENTS.map(ing => `${ing.name}: ${ing.amount} ${ing.unit}`).join('\n')}
+
+Return a JSON array with this EXACT structure for each ingredient:
+[
+  {"name": "Eggs (Large, Room Temp)", "amount": "X", "unit": "", "sub": "Flax eggs"},
+  {"name": "Buttermilk", "amount": "X", "unit": "cup", "sub": "Milk + 1tsp vinegar"},
+  ...
+]
+
+Rules:
+1. Calculate the scaling factor based on ${bananaCount} bananas vs 2.5 bananas (average of 2-3)
+2. Scale ALL ingredients proportionally
+3. Round to practical cooking measurements (1/4, 1/3, 1/2, 3/4, whole numbers)
+4. Keep all original names, units, and substitutes exactly as shown
+5. Return ONLY the JSON array, no other text`;
+
+            try {
+                const response = await callGemini(prompt, null, true);
+                const adjustedIngs = JSON.parse(response);
+                setAdjustedIngredients(adjustedIngs);
+                setIngredients(adjustedIngs);
+                setCheckedIngs({});
+            } catch (error) {
+                console.error("Error adjusting recipe:", error);
+                alert("Failed to adjust recipe. Please try again.");
+            }
+            
+            setAdjusting(false);
+        };
+
+        const resetToOriginal = () => {
+            setIngredients(ORIGINAL_INGREDIENTS);
+            setAdjustedIngredients(null);
+            setBananaCount(3);
+            setCheckedIngs({});
+        };
+
         const askGeminiStep = async (e, index, prompt) => {
             e.stopPropagation();
-            // If we already have it, just toggle visibility (simple implementation: clear it to close, fetch to open)
             if (stepTips[index]) {
                 setStepTips(prev => {
                     const newState = {...prev};
@@ -404,7 +519,6 @@
             setStepTips(prev => ({ ...prev, [index]: response }));
         };
 
-        // --- Feature 2: Ripe-o-Meter ---
         const handleCamera = (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -425,7 +539,6 @@
             setAnalyzing(false);
         };
 
-        // --- Feature 3: Creative Variation ---
         const generateVariation = async () => {
             setGeneratingVar(true);
             const prompt = "Suggest ONE creative, unique flavor variation for banana bread that works in a bread machine. List 2 extra ingredients to add. Keep it short.";
@@ -441,7 +554,6 @@
                 <h1>Tailored "Best Ever" Banana Bread</h1>
                 <p style={{textAlign: 'center', fontStyle: 'italic', color: '#666'}}>Adapted for Amazon Basics 2lb Machine (Program 9)</p>
 
-                {/* AI Ripe-o-Meter */}
                 <div className="ripeness-checker">
                     <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '15px'}}>
                         <span style={{fontSize: '2rem'}}>🍌</span>
@@ -476,15 +588,56 @@
                     )}
                 </div>
 
+                <div className="banana-adjuster">
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '10px'}}>
+                        <span style={{fontSize: '2rem'}}>🔢</span>
+                        <div>
+                            <h3 style={{margin: 0}}>🎯 Recipe Adjuster</h3>
+                            <p style={{margin: 0, fontSize: '0.9em'}}>How many bananas do you have?</p>
+                        </div>
+                    </div>
+
+                    <div className="banana-counter">
+                        <button className="counter-btn" onClick={() => setBananaCount(Math.max(1, bananaCount - 1))} disabled={adjusting || bananaCount <= 1}>
+                            −
+                        </button>
+                        <div className="counter-display">{bananaCount}</div>
+                        <button className="counter-btn" onClick={() => setBananaCount(Math.min(10, bananaCount + 1))} disabled={adjusting || bananaCount >= 10}>
+                            +
+                        </button>
+                    </div>
+
+                    <button className="adjust-btn" onClick={adjustRecipe} disabled={adjusting || bananaCount === 3}>
+                        {adjusting ? (
+                            <>
+                                <span className="loader"></span> Calculating...
+                            </>
+                        ) : (
+                            <>
+                                🤖 Adjust Recipe with AI
+                            </>
+                        )}
+                    </button>
+
+                    {adjustedIngredients && (
+                        <div style={{marginTop: '15px', padding: '10px', background: '#fff', borderRadius: '8px', fontSize: '0.9em'}}>
+                            <strong>✓ Recipe adjusted for {bananaCount} banana{bananaCount !== 1 ? 's' : ''}!</strong>
+                            <br />
+                            <button className="btn-reset" onClick={resetToOriginal} style={{float: 'none', marginTop: '10px'}}>
+                                Reset to Original (3 bananas)
+                            </button>
+                        </div>
+                    )}
+                </div>
+
                 <div className="grid-2">
-                    {/* Ingredients Section */}
                     <div className="section-box">
                         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                             <h3>Ingredients</h3>
                             <button className="btn-reset" onClick={() => setCheckedIngs({})}>Reset</button>
                         </div>
                         <ul className="list-group">
-                            {INGREDIENTS.map((ing, i) => (
+                            {ingredients.map((ing, i) => (
                                 <li key={i} className={`list-item ${checkedIngs[i] ? 'checked' : ''}`} onClick={() => toggleIng(i)}>
                                     <div className="checkbox">{checkedIngs[i] ? '✓' : ''}</div>
                                     <div>
@@ -496,7 +649,6 @@
                         </ul>
                     </div>
 
-                    {/* Substitutes / Info */}
                     <div className="substitutes">
                         <h3>Quick Substitutions</h3>
                         <p><strong>Missing Buttermilk?</strong><br/>Mix 1/3 cup milk + 1 tsp lemon juice. Let sit 5 mins.</p>
@@ -519,7 +671,6 @@
                     </div>
                 </div>
 
-                {/* Instructions Section */}
                 <div className="section-box">
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                         <h3>Instructions</h3>
@@ -534,7 +685,6 @@
                                         <strong>{step.title}</strong>
                                         {step.critical && <span className="critical-badge">Critical</span>}
 
-                                        {/* Ask AI Button */}
                                         {step.aiPrompt && (
                                             <button className="ai-btn" onClick={(e) => askGeminiStep(e, i, step.aiPrompt)}>
                                                 🤖 {stepTips[i] ? 'Hide Tip' : 'Ask AI'}
@@ -543,10 +693,8 @@
 
                                         <div style={{marginTop: '5px'}}>{step.text}</div>
 
-                                        {/* Loading State */}
                                         {loadingTips[i] && <div className="ai-tip-box"><span className="loader"></span> Asking Gemini...</div>}
 
-                                        {/* AI Response */}
                                         {stepTips[i] && (
                                             <div className="ai-tip-box">
                                                 <strong>Gemini says:</strong> {stepTips[i]}

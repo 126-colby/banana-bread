@@ -3,6 +3,7 @@ import type { APIRoute } from 'astro';
 interface GeminiRequest {
   prompt: string;
   imageBase64?: string | null;
+  useJsonMode?: boolean;
 }
 
 interface GeminiTextPart {
@@ -31,9 +32,8 @@ interface GeminiResponse {
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const body = await request.json() as GeminiRequest;
-    const { prompt, imageBase64 } = body;
+    const { prompt, imageBase64, useJsonMode } = body;
     
-    // Get API key from environment
     const apiKey = locals.runtime.env.GEMINI_API_KEY as string;
     
     if (!apiKey) {
@@ -48,7 +48,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const parts: GeminiPart[] = [{ text: prompt }];
     
     if (imageBase64) {
-      // Remove data:image/jpeg;base64, prefix if present
       const base64Data = imageBase64.includes(',') 
         ? imageBase64.split(',')[1] 
         : imageBase64;
@@ -61,13 +60,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
+    const requestBody: any = { contents: [{ parts }] };
+    
+    if (useJsonMode) {
+      requestBody.generationConfig = {
+        response_mime_type: "application/json"
+      };
+    }
+
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts }] })
+      body: JSON.stringify(requestBody)
     });
 
-    // Check for HTTP errors
     if (!response.ok) {
       console.error(`Gemini API HTTP error: ${response.status} ${response.statusText}`);
       return new Response(
