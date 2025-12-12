@@ -1,11 +1,27 @@
 import type { APIRoute } from 'astro';
 
+interface GeminiRequest {
+  prompt: string;
+  imageBase64?: string | null;
+}
+
+interface GeminiResponse {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{
+        text?: string;
+      }>;
+    };
+  }>;
+}
+
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const { prompt, imageBase64 } = await request.json();
+    const body = await request.json() as GeminiRequest;
+    const { prompt, imageBase64 } = body;
     
     // Get API key from environment
-    const apiKey = locals.runtime.env.GEMINI_API_KEY;
+    const apiKey = locals.runtime.env.GEMINI_API_KEY as string;
     
     if (!apiKey) {
       return new Response(
@@ -38,7 +54,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       body: JSON.stringify({ contents: [{ parts }] })
     });
 
-    const data = await response.json();
+    const data = await response.json() as GeminiResponse;
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Gemini couldn't process that.";
     
     return new Response(
