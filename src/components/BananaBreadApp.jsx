@@ -210,7 +210,8 @@ export default function BananaBreadApp() {
                         </div>
                     )}
 
-                    <ul className="list-group">{INGREDIENTS.map((ing, i) => (
+                    <ul className="list-group">
+                        {INGREDIENTS.map((ing, i) => (
                             <li key={i} className={`list-item ${checkedIngs[i] ? 'checked' : ''}`} onClick={() => toggleIng(i)}>
                                 <div className="checkbox">{checkedIngs[i] ? '✓' : ''}</div>
                                 <div>
@@ -253,7 +254,7 @@ export default function BananaBreadApp() {
                 {requiresBatching && (
                     <div className="batch-instructions">
                         <h4 style={{margin: '0 0 10px 0', color: 'var(--primary-color)'}}>🔄 Two-Batch Process</h4>
-                        <p><strong>Batch 1:</strong> Use half your bananas (approx 3). Follow recipe below.</p>
+                        <p><strong>Batch 1:</strong> Use half your bananas (approx {Math.floor(bananaCount / 2)}). Follow recipe below.</p>
                         <p><strong>Cool Down:</strong> Let machine cool for 20-30 mins.</p>
                         <p><strong>Batch 2:</strong> Repeat with remaining bananas.</p>
                     </div>
