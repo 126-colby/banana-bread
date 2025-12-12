@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { GoogleGenAI } from '@google/genai';
 
 interface GeminiRequest {
   prompt: string;
@@ -6,93 +7,94 @@ interface GeminiRequest {
   useJsonMode?: boolean;
 }
 
-interface GeminiTextPart {
-  text: string;
-}
+// CORS configuration
+const ALLOWED_ORIGINS = [
+  'https://banana-recipe.hacolby.workers.dev',
+  'http://localhost:4321',
+  'http://localhost:8788',
+  'http://127.0.0.1:4321',
+  'http://127.0.0.1:8788'
+];
 
-interface GeminiInlineDataPart {
-  inlineData: {
-    mimeType: string;
-    data: string;
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
   };
+
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin;
+    headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS';
+    headers['Access-Control-Allow-Headers'] = 'Content-Type';
+  }
+
+  return headers;
 }
 
-type GeminiPart = GeminiTextPart | GeminiInlineDataPart;
-
-interface GeminiResponse {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{
-        text?: string;
-      }>;
-    };
-  }>;
-}
+// Handle OPTIONS preflight requests
+export const OPTIONS: APIRoute = async ({ request }) => {
+  const origin = request.headers.get('origin');
+  return new Response(null, {
+    status: 204,
+    headers: getCorsHeaders(origin)
+  });
+};
 
 export const POST: APIRoute = async ({ request, locals }) => {
+  const origin = request.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   try {
     const body = await request.json() as GeminiRequest;
     const { prompt, imageBase64, useJsonMode } = body;
-    
+
     const apiKey = locals.runtime.env.GEMINI_API_KEY as string;
-    
+
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: '⚠️ API Key missing. Unable to contact Gemini.' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        { status: 500, headers: corsHeaders }
       );
     }
 
-    const model = `gemini-2.0-flash-exp`;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    // Initialize the Google Generative AI client
+    const genAI = new GoogleGenAI({ apiKey });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash-exp",
+      generationConfig: useJsonMode ? {
+        responseMimeType: "application/json"
+      } : undefined
+    });
 
-    const parts: GeminiPart[] = [{ text: prompt }];
-    
+    // Prepare the content parts
+    const parts: Array<string | { inlineData: { data: string; mimeType: string } }> = [prompt];
+
     if (imageBase64) {
-      const base64Data = imageBase64.includes(',') 
-        ? imageBase64.split(',')[1] 
+      const base64Data = imageBase64.includes(',')
+        ? imageBase64.split(',')[1]
         : imageBase64;
-      
+
       parts.push({
         inlineData: {
-          mimeType: "image/jpeg",
-          data: base64Data
+          data: base64Data,
+          mimeType: "image/jpeg"
         }
       });
     }
 
-    const requestBody: { contents: { parts: GeminiPart[] }[]; generationConfig?: any } = { contents: [{ parts }] };
-    
-    if (useJsonMode) {
-      requestBody.generationConfig = {
-        response_mime_type: "application/json"
-      };
-    }
+    // Generate content using the SDK
+    const result = await model.generateContent(parts);
+    const response = result.response;
+    const text = response.text() || "Gemini couldn't process that.";
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-      return new Response(
-        JSON.stringify({ error: `Gemini API error: ${response.statusText}` }),
-        { status: response.status, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const data = await response.json() as GeminiResponse;
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Gemini couldn't process that.";
-    
     return new Response(
       JSON.stringify({ text }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      { status: 200, headers: corsHeaders }
     );
   } catch (error) {
+    console.error('Gemini API Error:', error);
     return new Response(
       JSON.stringify({ error: "Error connecting to Gemini. Please try again." }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: corsHeaders }
     );
   }
 };
