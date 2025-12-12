@@ -64,6 +64,12 @@ h1 {
     border: 2px solid var(--accent-color);
 }
 
+.banana-input-label {
+    font-weight: bold;
+    margin-right: 10px;
+    color: var(--primary-color);
+}
+
 .banana-number-input {
     width: 80px;
     padding: 8px 12px;
@@ -113,6 +119,11 @@ h1 {
     margin-bottom: 20px;
     border-radius: 8px;
     animation: fadeIn 0.3s ease-in;
+}
+
+.batch-instructions-heading {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
 }
 
 .batch-instructions p {
