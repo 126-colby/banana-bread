@@ -75,6 +75,8 @@ export default function BananaBreadApp() {
     const [variation, setVariation] = useState(null);
     const [generatingVar, setGeneratingVar] = useState(false);
 
+    const [bananaCount, setBananaCount] = useState(3);
+
     useEffect(() => save(KEY_INGS, checkedIngs), [checkedIngs]);
     useEffect(() => save(KEY_STEPS, checkedSteps), [checkedSteps]);
 
@@ -131,6 +133,8 @@ export default function BananaBreadApp() {
         setGeneratingVar(false);
     };
 
+    const requiresBatching = bananaCount >= 4 && bananaCount <= 6;
+
     return (
         <div className="container">
             <img src="https://imagedelivery.net/guDBhnmcqEWgPQ1LAcR2gg/fb794af4-6209-4efd-4ad3-18a9db08ef00/public" alt="Banana Bread" className="hero-image" />
@@ -178,8 +182,35 @@ export default function BananaBreadApp() {
                         <h3>Ingredients</h3>
                         <button className="btn-reset" onClick={() => setCheckedIngs({})}>Reset</button>
                     </div>
-                    <ul className="list-group">
-                        {INGREDIENTS.map((ing, i) => (
+                    
+                    <div className="banana-input-container">
+                        <label htmlFor="banana-count" style={{fontWeight: 'bold', marginRight: '10px', color: 'var(--primary-color)'}}>
+                            🍌 How many bananas do you have?
+                        </label>
+                        <input 
+                            id="banana-count"
+                            type="number" 
+                            min="1" 
+                            max="6" 
+                            value={bananaCount}
+                            onChange={(e) => setBananaCount(parseInt(e.target.value) || 3)}
+                            className="banana-number-input"
+                        />
+                    </div>
+
+                    {requiresBatching && (
+                        <div className="batching-warning">
+                            ⚠️ <strong>Batching Required!</strong> This quantity exceeds the machine capacity (Max 3.5 cups flour). You'll need to make <strong>2 separate loaves</strong>.
+                        </div>
+                    )}
+
+                    {requiresBatching && (
+                        <div className="batch-note">
+                            📝 <strong>Note:</strong> Ingredients listed are for ONE loaf. You will need to measure this out twice.
+                        </div>
+                    )}
+
+                    <ul className="list-group">{INGREDIENTS.map((ing, i) => (
                             <li key={i} className={`list-item ${checkedIngs[i] ? 'checked' : ''}`} onClick={() => toggleIng(i)}>
                                 <div className="checkbox">{checkedIngs[i] ? '✓' : ''}</div>
                                 <div>
@@ -218,6 +249,16 @@ export default function BananaBreadApp() {
                     <h3>Instructions</h3>
                     <button className="btn-reset" onClick={() => setCheckedSteps({})}>Reset</button>
                 </div>
+                
+                {requiresBatching && (
+                    <div className="batch-instructions">
+                        <h4 style={{margin: '0 0 10px 0', color: 'var(--primary-color)'}}>🔄 Two-Batch Process</h4>
+                        <p><strong>Batch 1:</strong> Use half your bananas (approx 3). Follow recipe below.</p>
+                        <p><strong>Cool Down:</strong> Let machine cool for 20-30 mins.</p>
+                        <p><strong>Batch 2:</strong> Repeat with remaining bananas.</p>
+                    </div>
+                )}
+
                 <div>
                     {STEPS.map((step, i) => (
                         <div key={i} className={`step-item ${checkedSteps[i] ? 'checked' : ''}`} onClick={() => toggleStep(i)}>

@@ -54,6 +54,72 @@ h1 {
     background-color: #eee;
 }
 
+/* --- Banana Count Input --- */
+.banana-input-container {
+    background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+    border: 2px solid var(--accent-color);
+}
+
+.banana-number-input {
+    width: 80px;
+    padding: 8px 12px;
+    border: 2px solid var(--accent-color);
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-align: center;
+    color: var(--primary-color);
+    background: white;
+}
+
+.banana-number-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(93, 64, 55, 0.1);
+}
+
+/* --- Batching Warning --- */
+.batching-warning {
+    background: #FFF3CD;
+    border: 2px solid #FFC107;
+    border-left: 5px solid #FF9800;
+    color: #664d03;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.batch-note {
+    background: var(--ai-bg);
+    border-left: 4px solid var(--ai-color);
+    color: #0D47A1;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.batch-instructions {
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+    border: 2px solid var(--success-color);
+    border-left: 5px solid var(--success-color);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.batch-instructions p {
+    margin: 8px 0;
+    font-size: 0.95em;
+}
+
 /* --- List Styling --- */
 .list-group {
     list-style: none;
