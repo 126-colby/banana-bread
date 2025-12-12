@@ -76,7 +76,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
 
     if (!response.ok) {
-      console.error(`Gemini API HTTP error: ${response.status} ${response.statusText}`);
       return new Response(
         JSON.stringify({ error: `Gemini API error: ${response.statusText}` }),
         { status: response.status, headers: { 'Content-Type': 'application/json' } }
@@ -91,7 +90,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error("Gemini API Error:", error);
     return new Response(
       JSON.stringify({ error: "Error connecting to Gemini. Please try again." }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

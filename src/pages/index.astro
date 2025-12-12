@@ -262,6 +262,57 @@
             display: inline-block;
         }
 
+        .error-message {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            color: #c62828;
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin: 15px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            animation: fadeIn 0.3s ease-in;
+            box-shadow: 0 2px 8px rgba(244, 67, 54, 0.1);
+        }
+
+        .error-message-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .error-message-content {
+            flex: 1;
+        }
+
+        .error-message-title {
+            font-weight: 700;
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+
+        .error-message-text {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .error-dismiss {
+            background: none;
+            border: none;
+            color: #c62828;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0;
+            margin-left: 10px;
+            flex-shrink: 0;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .error-dismiss:hover {
+            opacity: 1;
+        }
+
         .banana-adjuster {
             background: linear-gradient(135deg, #FFF8E1, #FFE082);
             border: 2px solid var(--accent-color);
@@ -352,7 +403,7 @@
             body { background: white; padding: 0; }
             .container { box-shadow: none; padding: 0; margin: 0; width: 100%; max-width: 100%; }
             .hero-image { height: 200px; }
-            .btn-reset, .ai-btn, .camera-btn, input, .variation-generator, .banana-adjuster { display: none !important; }
+            .btn-reset, .ai-btn, .camera-btn, input, .variation-generator, .banana-adjuster, .error-message { display: none !important; }
             .ripeness-checker { border: 1px solid #ccc; background: none; }
             .list-item { border-bottom: 1px solid #eee; }
             .checkbox { border-color: #000; color: #000; }
@@ -396,13 +447,12 @@
             const data = await response.json();
             
             if (data.error) {
-                return data.error;
+                throw new Error(data.error);
             }
             
             return data.text || "Gemini couldn't process that.";
         } catch (error) {
-            console.error("Error calling Gemini API:", error);
-            return "Error connecting to Gemini. Please try again.";
+            throw error;
         }
     }
 
@@ -434,18 +484,22 @@
 
         const [stepTips, setStepTips] = useState({});
         const [loadingTips, setLoadingTips] = useState({});
+        const [stepErrors, setStepErrors] = useState({});
 
         const [imgPreview, setImgPreview] = useState(null);
         const [analysis, setAnalysis] = useState(null);
         const [analyzing, setAnalyzing] = useState(false);
+        const [analysisError, setAnalysisError] = useState(null);
         const fileInput = useRef(null);
 
         const [variation, setVariation] = useState(null);
         const [generatingVar, setGeneratingVar] = useState(false);
+        const [variationError, setVariationError] = useState(null);
 
         const [bananaCount, setBananaCount] = useState(3);
         const [adjustedIngredients, setAdjustedIngredients] = useState(null);
         const [adjusting, setAdjusting] = useState(false);
+        const [adjustError, setAdjustError] = useState(null);
         const [ingredients, setIngredients] = useState(ORIGINAL_INGREDIENTS);
 
         useEffect(() => save(KEY_INGS, checkedIngs), [checkedIngs]);
@@ -461,6 +515,7 @@
 
         const adjustRecipe = async () => {
             setAdjusting(true);
+            setAdjustError(null);
             
             const prompt = `You are a precise recipe calculator. Given the original banana bread recipe that uses 2-3 bananas (1 cup mashed), adjust ALL ingredients proportionally for ${bananaCount} bananas.
 
@@ -487,9 +542,12 @@ Rules:
                 setAdjustedIngredients(adjustedIngs);
                 setIngredients(adjustedIngs);
                 setCheckedIngs({});
+                setAdjustError(null);
             } catch (error) {
-                console.error("Error adjusting recipe:", error);
-                alert("Failed to adjust recipe. Please try again.");
+                setAdjustError({
+                    title: "Recipe Adjustment Failed",
+                    message: error.message || "Unable to adjust the recipe. Please check your internet connection and try again."
+                });
             }
             
             setAdjusting(false);
@@ -500,6 +558,7 @@ Rules:
             setAdjustedIngredients(null);
             setBananaCount(3);
             setCheckedIngs({});
+            setAdjustError(null);
         };
 
         const askGeminiStep = async (e, index, prompt) => {
@@ -510,13 +569,32 @@ Rules:
                     delete newState[index];
                     return newState;
                 });
+                setStepErrors(prev => {
+                    const newState = {...prev};
+                    delete newState[index];
+                    return newState;
+                });
                 return;
             }
 
             setLoadingTips(prev => ({ ...prev, [index]: true }));
-            const response = await callGemini(prompt + " Keep the answer concise (under 40 words) and helpful.");
-            setLoadingTips(prev => ({ ...prev, [index]: false }));
-            setStepTips(prev => ({ ...prev, [index]: response }));
+            setStepErrors(prev => {
+                const newState = {...prev};
+                delete newState[index];
+                return newState;
+            });
+            
+            try {
+                const response = await callGemini(prompt + " Keep the answer concise (under 40 words) and helpful.");
+                setLoadingTips(prev => ({ ...prev, [index]: false }));
+                setStepTips(prev => ({ ...prev, [index]: response }));
+            } catch (error) {
+                setLoadingTips(prev => ({ ...prev, [index]: false }));
+                setStepErrors(prev => ({ ...prev, [index]: {
+                    title: "AI Tip Unavailable",
+                    message: error.message || "Unable to get AI assistance. Please try again."
+                }}));
+            }
         };
 
         const handleCamera = (e) => {
@@ -526,6 +604,7 @@ Rules:
                 reader.onload = (ev) => {
                     setImgPreview(ev.target.result);
                     setAnalysis(null);
+                    setAnalysisError(null);
                 };
                 reader.readAsDataURL(file);
             }
@@ -533,17 +612,37 @@ Rules:
 
         const analyzeImage = async () => {
             setAnalyzing(true);
-            const prompt = "Look at these bananas. Are they ripe enough for banana bread? If green, say wait. If yellow, suggest adding sugar. If spotted/black, say they are perfect. Be brief and fun. Address the user directly.";
-            const response = await callGemini(prompt, imgPreview);
-            setAnalysis(response);
+            setAnalysisError(null);
+            
+            try {
+                const prompt = "Look at these bananas. Are they ripe enough for banana bread? If green, say wait. If yellow, suggest adding sugar. If spotted/black, say they are perfect. Be brief and fun. Address the user directly.";
+                const response = await callGemini(prompt, imgPreview);
+                setAnalysis(response);
+            } catch (error) {
+                setAnalysisError({
+                    title: "Analysis Failed",
+                    message: error.message || "Unable to analyze the image. Please try again."
+                });
+            }
+            
             setAnalyzing(false);
         };
 
         const generateVariation = async () => {
             setGeneratingVar(true);
-            const prompt = "Suggest ONE creative, unique flavor variation for banana bread that works in a bread machine. List 2 extra ingredients to add. Keep it short.";
-            const response = await callGemini(prompt);
-            setVariation(response);
+            setVariationError(null);
+            
+            try {
+                const prompt = "Suggest ONE creative, unique flavor variation for banana bread that works in a bread machine. List 2 extra ingredients to add. Keep it short.";
+                const response = await callGemini(prompt);
+                setVariation(response);
+            } catch (error) {
+                setVariationError({
+                    title: "Variation Generation Failed",
+                    message: error.message || "Unable to generate a variation. Please try again."
+                });
+            }
+            
             setGeneratingVar(false);
         };
 
@@ -584,6 +683,16 @@ Rules:
                             )}
                             {analyzing && <p>Consulting the banana database...</p>}
                             {analysis && <div className="ai-tip-box" style={{background: '#fff', marginTop: '15px'}}><strong>Gemini says:</strong> {analysis}</div>}
+                            {analysisError && (
+                                <div className="error-message">
+                                    <span className="error-message-icon">⚠️</span>
+                                    <div className="error-message-content">
+                                        <div className="error-message-title">{analysisError.title}</div>
+                                        <div className="error-message-text">{analysisError.message}</div>
+                                    </div>
+                                    <button className="error-dismiss" onClick={() => setAnalysisError(null)}>×</button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -618,6 +727,17 @@ Rules:
                             </>
                         )}
                     </button>
+
+                    {adjustError && (
+                        <div className="error-message">
+                            <span className="error-message-icon">⚠️</span>
+                            <div className="error-message-content">
+                                <div className="error-message-title">{adjustError.title}</div>
+                                <div className="error-message-text">{adjustError.message}</div>
+                            </div>
+                            <button className="error-dismiss" onClick={() => setAdjustError(null)}>×</button>
+                        </div>
+                    )}
 
                     {adjustedIngredients && (
                         <div style={{marginTop: '15px', padding: '10px', background: '#fff', borderRadius: '8px', fontSize: '0.9em'}}>
@@ -662,6 +782,16 @@ Rules:
                                 </button>
                             )}
                             {generatingVar && <div className="loader"></div>}
+                            {variationError && (
+                                <div className="error-message" style={{textAlign: 'left'}}>
+                                    <span className="error-message-icon">⚠️</span>
+                                    <div className="error-message-content">
+                                        <div className="error-message-title">{variationError.title}</div>
+                                        <div className="error-message-text">{variationError.message}</div>
+                                    </div>
+                                    <button className="error-dismiss" onClick={() => setVariationError(null)}>×</button>
+                                </div>
+                            )}
                             {variation && (
                                 <div style={{fontSize: '0.9em', color: '#0D47A1', marginTop: '10px'}}>
                                     {variation}
@@ -694,6 +824,24 @@ Rules:
                                         <div style={{marginTop: '5px'}}>{step.text}</div>
 
                                         {loadingTips[i] && <div className="ai-tip-box"><span className="loader"></span> Asking Gemini...</div>}
+
+                                        {stepErrors[i] && (
+                                            <div className="error-message" style={{marginTop: '10px'}}>
+                                                <span className="error-message-icon">⚠️</span>
+                                                <div className="error-message-content">
+                                                    <div className="error-message-title">{stepErrors[i].title}</div>
+                                                    <div className="error-message-text">{stepErrors[i].message}</div>
+                                                </div>
+                                                <button className="error-dismiss" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setStepErrors(prev => {
+                                                        const newState = {...prev};
+                                                        delete newState[i];
+                                                        return newState;
+                                                    });
+                                                }}>×</button>
+                                            </div>
+                                        )}
 
                                         {stepTips[i] && (
                                             <div className="ai-tip-box">
