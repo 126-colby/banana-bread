@@ -70,7 +70,7 @@ h1 {
     color: var(--primary-color);
     display: block;
     margin-bottom: 15px;
-    font-size: 1.1em;
+    font-size: 1.1rem;
 }
 
 .banana-counter {

@@ -187,10 +187,10 @@ export default function BananaBreadApp() {
                     </div>
                     
                     <div className="banana-input-container">
-                        <label className="banana-input-label">
+                        <label id="banana-counter-label" className="banana-input-label">
                             🍌 How many bananas do you have?
                         </label>
-                        <div className="banana-counter">
+                        <div className="banana-counter" role="group" aria-labelledby="banana-counter-label">
                             <button 
                                 className="banana-counter-btn"
                                 onClick={() => setBananaCount(prev => Math.max(MIN_BANANA_COUNT, prev - 1))}
@@ -199,7 +199,7 @@ export default function BananaBreadApp() {
                             >
                                 −
                             </button>
-                            <span className="banana-counter-display">{bananaCount}</span>
+                            <span className="banana-counter-display" aria-live="polite">{bananaCount}</span>
                             <button 
                                 className="banana-counter-btn"
                                 onClick={() => setBananaCount(prev => Math.min(MAX_BANANA_COUNT, prev + 1))}
