@@ -3,6 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 const KEY_INGS = 'banana_bread_ings_v3';
 const KEY_STEPS = 'banana_bread_steps_v3';
 const ONE_DAY = 24 * 60 * 60 * 1000;
+const DEFAULT_BANANA_COUNT = 3;
+const MIN_BANANA_COUNT = 1;
+const MAX_BANANA_COUNT = 6;
 
 const save = (key, data) => {
     localStorage.setItem(key, JSON.stringify({
@@ -75,7 +78,7 @@ export default function BananaBreadApp() {
     const [variation, setVariation] = useState(null);
     const [generatingVar, setGeneratingVar] = useState(false);
 
-    const [bananaCount, setBananaCount] = useState(3);
+    const [bananaCount, setBananaCount] = useState(DEFAULT_BANANA_COUNT);
 
     useEffect(() => save(KEY_INGS, checkedIngs), [checkedIngs]);
     useEffect(() => save(KEY_STEPS, checkedSteps), [checkedSteps]);
@@ -190,15 +193,15 @@ export default function BananaBreadApp() {
                         <input 
                             id="banana-count"
                             type="number" 
-                            min="1" 
-                            max="6" 
+                            min={MIN_BANANA_COUNT}
+                            max={MAX_BANANA_COUNT}
                             value={bananaCount}
                             onChange={(e) => {
                                 const value = parseInt(e.target.value);
-                                if (!isNaN(value) && value >= 1 && value <= 6) {
+                                if (!isNaN(value) && value >= MIN_BANANA_COUNT && value <= MAX_BANANA_COUNT) {
                                     setBananaCount(value);
                                 } else if (e.target.value === '') {
-                                    setBananaCount(3);
+                                    setBananaCount(DEFAULT_BANANA_COUNT);
                                 }
                             }}
                             className="banana-number-input"
