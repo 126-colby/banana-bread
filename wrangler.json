@@ -7,9 +7,6 @@
     "directory": "./dist",
     "binding": "ASSETS"
   },
-  "vars": {
-    "GEMINI_API_KEY": "YOUR_API_KEY_HERE"
-  },
   "observability": {
     "enabled": true
   },
