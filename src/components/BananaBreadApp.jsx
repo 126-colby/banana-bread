@@ -187,25 +187,28 @@ export default function BananaBreadApp() {
                     </div>
                     
                     <div className="banana-input-container">
-                        <label htmlFor="banana-count" className="banana-input-label">
+                        <label className="banana-input-label">
                             🍌 How many bananas do you have?
                         </label>
-                        <input 
-                            id="banana-count"
-                            type="number" 
-                            min={MIN_BANANA_COUNT}
-                            max={MAX_BANANA_COUNT}
-                            value={bananaCount}
-                            onChange={(e) => {
-                                const value = parseInt(e.target.value);
-                                if (!isNaN(value) && value >= MIN_BANANA_COUNT && value <= MAX_BANANA_COUNT) {
-                                    setBananaCount(value);
-                                } else if (e.target.value === '') {
-                                    setBananaCount(DEFAULT_BANANA_COUNT);
-                                }
-                            }}
-                            className="banana-number-input"
-                        />
+                        <div className="banana-counter">
+                            <button 
+                                className="banana-counter-btn"
+                                onClick={() => setBananaCount(prev => Math.max(MIN_BANANA_COUNT, prev - 1))}
+                                disabled={bananaCount <= MIN_BANANA_COUNT}
+                                aria-label="Decrease banana count"
+                            >
+                                −
+                            </button>
+                            <span className="banana-counter-display">{bananaCount}</span>
+                            <button 
+                                className="banana-counter-btn"
+                                onClick={() => setBananaCount(prev => Math.min(MAX_BANANA_COUNT, prev + 1))}
+                                disabled={bananaCount >= MAX_BANANA_COUNT}
+                                aria-label="Increase banana count"
+                            >
+                                +
+                            </button>
+                        </div>
                     </div>
 
                     {requiresBatching && (

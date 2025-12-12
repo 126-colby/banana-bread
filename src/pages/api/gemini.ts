@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const model = `gemini-3-pro-preview`;
+    const model = `gemini-2.0-flash-exp`;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const parts: GeminiPart[] = [{ text: prompt }];
