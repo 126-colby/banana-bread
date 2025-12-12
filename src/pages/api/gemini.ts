@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    const requestBody: any = { contents: [{ parts }] };
+    const requestBody: { contents: { parts: GeminiPart[] }[]; generationConfig?: any } = { contents: [{ parts }] };
     
     if (useJsonMode) {
       requestBody.generationConfig = {
