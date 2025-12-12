@@ -37,7 +37,9 @@ Update the `GEMINI_API_KEY` value in `wrangler.json`:
 }
 ```
 
-#### Option 2: Using Cloudflare Secrets (for production)
+**⚠️ SECURITY WARNING**: Never commit real API keys to version control. The placeholder value `YOUR_API_KEY_HERE` in the repository should be replaced with your actual key only in your local environment.
+
+#### Option 2: Using Cloudflare Secrets (for production - RECOMMENDED)
 
 Set the secret using wrangler CLI:
 
@@ -45,7 +47,7 @@ Set the secret using wrangler CLI:
 npx wrangler secret put GEMINI_API_KEY
 ```
 
-Then enter your API key when prompted.
+Then enter your API key when prompted. This is the recommended approach for production deployments as it keeps your API key secure.
 
 #### Getting a Gemini API Key
 

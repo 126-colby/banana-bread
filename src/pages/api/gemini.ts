@@ -5,6 +5,19 @@ interface GeminiRequest {
   imageBase64?: string | null;
 }
 
+interface GeminiTextPart {
+  text: string;
+}
+
+interface GeminiInlineDataPart {
+  inlineData: {
+    mimeType: string;
+    data: string;
+  };
+}
+
+type GeminiPart = GeminiTextPart | GeminiInlineDataPart;
+
 interface GeminiResponse {
   candidates?: Array<{
     content?: {
@@ -32,7 +45,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
 
-    const parts: any[] = [{ text: prompt }];
+    const parts: GeminiPart[] = [{ text: prompt }];
     
     if (imageBase64) {
       // Remove data:image/jpeg;base64, prefix if present
@@ -53,6 +66,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ contents: [{ parts }] })
     });
+
+    // Check for HTTP errors
+    if (!response.ok) {
+      console.error(`Gemini API HTTP error: ${response.status} ${response.statusText}`);
+      return new Response(
+        JSON.stringify({ error: `Gemini API error: ${response.statusText}` }),
+        { status: response.status, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
     const data = await response.json() as GeminiResponse;
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Gemini couldn't process that.";
