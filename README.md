@@ -1,48 +1,64 @@
-# Astro Starter Kit: Blog
+# Banana Bread Recipe App
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/astro-blog-starter-template)
+An interactive banana bread recipe application built with Astro and React, featuring AI-powered assistance through Google's Gemini API.
 
-![Astro Template Preview](https://github.com/withastro/astro/assets/2244813/ff10799f-a816-4703-b967-c78997e8323d)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/126-colby/banana-bread)
 
-<!-- dash-content-start -->
+## Features
 
-Create a blog with Astro and deploy it on Cloudflare Workers as a [static website](https://developers.cloudflare.com/workers/static-assets/).
+- 🍌 Interactive recipe with checkable ingredients and steps
+- 🤖 AI-powered tips and suggestions using Google Gemini
+- 📷 Banana ripeness checker using image analysis
+- ✨ Creative recipe variation generator
+- 💾 Progress persistence (24-hour expiry)
+- 📱 Responsive design with print-friendly styles
 
-Features:
+## Setup
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
-- ✅ Built-in Observability logging
-
-<!-- dash-content-end -->
-
-## Getting Started
-
-Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):
+### 1. Install Dependencies
 
 ```bash
-npm create cloudflare@latest -- --template=cloudflare/templates/astro-blog-starter-template
+npm install
 ```
 
-A live public deployment of this template is available at [https://astro-blog-starter-template.templates.workers.dev](https://astro-blog-starter-template.templates.workers.dev)
+### 2. Configure Gemini API Key
 
-## 🚀 Project Structure
+This application requires a Google Gemini API key to power the AI features.
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+#### Option 1: Using wrangler.json (for development)
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Update the `GEMINI_API_KEY` value in `wrangler.json`:
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+```json
+{
+  "vars": {
+    "GEMINI_API_KEY": "your-api-key-here"
+  }
+}
+```
 
-Any static assets, like images, can be placed in the `public/` directory.
+**⚠️ SECURITY WARNING**: Never commit real API keys to version control. The placeholder value `YOUR_API_KEY_HERE` in the repository should be replaced with your actual key only in your local environment.
 
-## 🧞 Commands
+#### Option 2: Using Cloudflare Secrets (for production - RECOMMENDED)
 
-All commands are run from the root of the project, from a terminal:
+Set the secret using wrangler CLI:
+
+```bash
+npx wrangler secret put GEMINI_API_KEY
+```
+
+Then enter your API key when prompted. This is the recommended approach for production deployments as it keeps your API key secure.
+
+#### Getting a Gemini API Key
+
+1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the generated key
+
+## 🚀 Development
+
+All commands are run from the root of the project:
 
 | Command                           | Action                                           |
 | :-------------------------------- | :----------------------------------------------- |
@@ -50,15 +66,29 @@ All commands are run from the root of the project, from a terminal:
 | `npm run dev`                     | Starts local dev server at `localhost:4321`      |
 | `npm run build`                   | Build your production site to `./dist/`          |
 | `npm run preview`                 | Preview your build locally, before deploying     |
-| `npm run astro ...`               | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help`         | Get help using the Astro CLI                     |
-| `npm run build && npm run deploy` | Deploy your production site to Cloudflare        |
-| `npm wrangler tail`               | View real-time logs for all Workers              |
+| `npm run check`                   | Run build, TypeScript check, and dry-run deploy  |
+| `npm run deploy`                  | Deploy your production site to Cloudflare        |
 
-## 👀 Want to learn more?
+## 🧞 Project Structure
 
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+```
+/
+├── src/
+│   ├── pages/
+│   │   ├── index.astro          # Main banana bread recipe page
+│   │   └── api/
+│   │       └── gemini.ts        # Server-side Gemini API endpoint
+│   └── content/                 # Blog content (from original template)
+├── public/                      # Static assets
+└── wrangler.json               # Cloudflare Workers configuration
+```
 
-## Credit
+## 🔒 Security
 
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+- The Gemini API key is stored as an environment variable/secret
+- API calls are made server-side to protect the API key
+- The key is never exposed to the client
+
+## 📝 License
+
+MIT

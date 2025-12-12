@@ -15,9 +15,12 @@
   "dependencies": {
     "@astrojs/cloudflare": "12.6.0",
     "@astrojs/mdx": "4.3.0",
+    "@astrojs/react": "^4.4.2",
     "@astrojs/rss": "4.0.11",
     "@astrojs/sitemap": "3.4.1",
     "astro": "5.10.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "typescript": "5.8.3"
   },
   "devDependencies": {
@@ -28,7 +31,7 @@
     "build": "astro build",
     "cf-typegen": "wrangler types",
     "check": "astro build && tsc && wrangler deploy --dry-run",
-    "deploy": "npm run build & wrangler deploy",
+    "deploy": "astro build && wrangler deploy",
     "dev": "astro dev",
     "preview": "astro build && wrangler dev"
   },
