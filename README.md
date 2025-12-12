@@ -2,7 +2,7 @@
 
 An interactive banana bread recipe application built with Astro and React, featuring AI-powered assistance through Google's Gemini API.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/astro-blog-starter-template)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/126-colby/banana-bread)
 
 ## Features
 
