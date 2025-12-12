@@ -3,6 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 const KEY_INGS = 'banana_bread_ings_v3';
 const KEY_STEPS = 'banana_bread_steps_v3';
 const ONE_DAY = 24 * 60 * 60 * 1000;
+const DEFAULT_BANANA_COUNT = 3;
+const MIN_BANANA_COUNT = 1;
+const MAX_BANANA_COUNT = 6;
 
 const save = (key, data) => {
     localStorage.setItem(key, JSON.stringify({
@@ -75,6 +78,8 @@ export default function BananaBreadApp() {
     const [variation, setVariation] = useState(null);
     const [generatingVar, setGeneratingVar] = useState(false);
 
+    const [bananaCount, setBananaCount] = useState(DEFAULT_BANANA_COUNT);
+
     useEffect(() => save(KEY_INGS, checkedIngs), [checkedIngs]);
     useEffect(() => save(KEY_STEPS, checkedSteps), [checkedSteps]);
 
@@ -131,6 +136,8 @@ export default function BananaBreadApp() {
         setGeneratingVar(false);
     };
 
+    const requiresBatching = bananaCount >= 4 && bananaCount <= 6;
+
     return (
         <div className="container">
             <img src="https://imagedelivery.net/guDBhnmcqEWgPQ1LAcR2gg/fb794af4-6209-4efd-4ad3-18a9db08ef00/public" alt="Banana Bread" className="hero-image" />
@@ -178,6 +185,44 @@ export default function BananaBreadApp() {
                         <h3>Ingredients</h3>
                         <button className="btn-reset" onClick={() => setCheckedIngs({})}>Reset</button>
                     </div>
+                    
+                    <div className="banana-input-container">
+                        <label id="banana-counter-label" className="banana-input-label">
+                            🍌 How many bananas do you have?
+                        </label>
+                        <div className="banana-counter" role="group" aria-labelledby="banana-counter-label">
+                            <button 
+                                className="banana-counter-btn"
+                                onClick={() => setBananaCount(prev => Math.max(MIN_BANANA_COUNT, prev - 1))}
+                                disabled={bananaCount <= MIN_BANANA_COUNT}
+                                aria-label="Decrease banana count"
+                            >
+                                −
+                            </button>
+                            <span className="banana-counter-display" aria-live="polite">{bananaCount}</span>
+                            <button 
+                                className="banana-counter-btn"
+                                onClick={() => setBananaCount(prev => Math.min(MAX_BANANA_COUNT, prev + 1))}
+                                disabled={bananaCount >= MAX_BANANA_COUNT}
+                                aria-label="Increase banana count"
+                            >
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                    {requiresBatching && (
+                        <div className="batching-warning">
+                            ⚠️ <strong>Batching Required!</strong> This quantity exceeds the machine capacity (Max 3.5 cups flour). You'll need to make <strong>2 separate loaves</strong>.
+                        </div>
+                    )}
+
+                    {requiresBatching && (
+                        <div className="batch-note">
+                            📝 <strong>Note:</strong> Ingredients listed are for ONE loaf. You will need to measure this out twice.
+                        </div>
+                    )}
+
                     <ul className="list-group">
                         {INGREDIENTS.map((ing, i) => (
                             <li key={i} className={`list-item ${checkedIngs[i] ? 'checked' : ''}`} onClick={() => toggleIng(i)}>
@@ -218,6 +263,16 @@ export default function BananaBreadApp() {
                     <h3>Instructions</h3>
                     <button className="btn-reset" onClick={() => setCheckedSteps({})}>Reset</button>
                 </div>
+                
+                {requiresBatching && (
+                    <div className="batch-instructions">
+                        <h4 className="batch-instructions-heading">🔄 Two-Batch Process</h4>
+                        <p><strong>Batch 1:</strong> Use half your bananas (approx {Math.ceil(bananaCount / 2)}). Follow recipe below.</p>
+                        <p><strong>Cool Down:</strong> Let machine cool for 20-30 mins.</p>
+                        <p><strong>Batch 2:</strong> Repeat with remaining bananas.</p>
+                    </div>
+                )}
+
                 <div>
                     {STEPS.map((step, i) => (
                         <div key={i} className={`step-item ${checkedSteps[i] ? 'checked' : ''}`} onClick={() => toggleStep(i)}>

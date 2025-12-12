@@ -54,6 +54,115 @@ h1 {
     background-color: #eee;
 }
 
+/* --- Banana Count Input --- */
+.banana-input-container {
+    background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+    border: 2px solid var(--accent-color);
+}
+
+.banana-input-label {
+    font-weight: bold;
+    margin-right: 10px;
+    color: var(--primary-color);
+    display: block;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.banana-counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.banana-counter-btn {
+    width: 50px;
+    height: 50px;
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    background: white;
+    color: var(--primary-color);
+    font-size: 1.8em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.banana-counter-btn:hover:not(:disabled) {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+.banana-counter-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.banana-counter-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.banana-counter-display {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: var(--primary-color);
+    min-width: 60px;
+    text-align: center;
+}
+
+/* --- Batching Warning --- */
+.batching-warning {
+    background: #FFF3CD;
+    border: 2px solid #FFC107;
+    border-left: 5px solid #FF9800;
+    color: #664d03;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.batch-note {
+    background: var(--ai-bg);
+    border-left: 4px solid var(--ai-color);
+    color: #0D47A1;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.batch-instructions {
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+    border: 2px solid var(--success-color);
+    border-left: 5px solid var(--success-color);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.batch-instructions-heading {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+}
+
+.batch-instructions p {
+    margin: 8px 0;
+    font-size: 0.95em;
+}
+
 /* --- List Styling --- */
 .list-group {
     list-style: none;
